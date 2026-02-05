@@ -1,26 +1,26 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { updateSession } from '@/lib/supabase/middleware';
+
+// Demo mode - no auth required
+const DEMO_MODE = !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function middleware(request: NextRequest) {
+  // In demo mode, just pass through - no auth checks
+  if (DEMO_MODE) {
+    return NextResponse.next();
+  }
+
+  // Only import Supabase middleware if we're not in demo mode
   try {
+    const { updateSession } = await import('@/lib/supabase/middleware');
     return await updateSession(request);
   } catch (error) {
     console.error('Middleware error:', error);
-    // On error, just pass through to avoid breaking the site
     return NextResponse.next();
   }
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - api routes (handled separately)
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
